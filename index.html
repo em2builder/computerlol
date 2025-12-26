@@ -2,71 +2,127 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Счётчик</title>
+  <title>Счётчик до сборки компьютера</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 50px;
+      margin: 0;
+      padding: 40px 10px;
+      min-height: 100vh;
+
+      /* Фон в стиле Brawl Stars */
+      background:
+        radial-gradient(circle at 20% 20%, #ffd54f 2px, transparent 3px),
+        radial-gradient(circle at 80% 30%, #ff7043 2px, transparent 3px),
+        radial-gradient(circle at 50% 70%, #4fc3f7 2px, transparent 3px),
+        linear-gradient(135deg, #7b2ff7, #3a7bd5);
+      background-size: 120px 120px, 160px 160px, 200px 200px, cover;
+      color: #fff;
     }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
     .note {
       font-size: 18px;
-      margin-bottom: 15px;
+      margin-bottom: 25px;
+      color: #ffeb3b;
     }
-    .time {
-      font-size: 24px;
-      margin: 10px 0;
+
+    .card {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 15px auto;
+      max-width: 400px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     }
-    .percent {
+
+    .title {
       font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .time {
+      font-size: 26px;
+      margin: 6px 0;
+    }
+
+    .percent {
+      font-size: 18px;
+    }
+
+    .best {
+      border: 2px solid #4caf50;
+    }
+
+    .worst {
+      border: 2px solid #f44336;
     }
   </style>
 </head>
 <body>
 
 <h2>Счётчик времени</h2>
-<div class="note">
-  Это счётчик до сборки компьютера
+<div class="note">Это счётчик до сборки компьютера</div>
+
+<div class="card best">
+  <div class="title">Лучший случай (13:00)</div>
+  <div class="time" id="timerBest"></div>
+  <div class="percent" id="percentBest"></div>
 </div>
 
-<div class="time" id="timer"></div>
-<div class="percent" id="percent"></div>
+<div class="card worst">
+  <div class="title">Худший случай (17:00)</div>
+  <div class="time" id="timerWorst"></div>
+  <div class="percent" id="percentWorst"></div>
+</div>
 
 <script>
-  const endTime = new Date("2025-12-27T14:00:00").getTime();
+  const totalDuration = 99960 * 1000; // твоя выбранная длительность
 
-  // 65 часов в миллисекундах
-  const totalDuration = 99960 * 1000;
-  const startTime = endTime - totalDuration;
+  const bestEnd = new Date("2025-12-27T13:00:00").getTime();
+  const worstEnd = new Date("2025-12-27T17:00:00").getTime();
 
-  function updateTimer() {
-    const now = Date.now();
-    const diff = endTime - now;
+  const bestStart = bestEnd - totalDuration;
+  const worstStart = worstEnd - totalDuration;
 
-    if (diff <= 0) {
-      document.getElementById("timer").textContent = "Время вышло";
-      document.getElementById("percent").textContent = "100%";
-      return;
-    }
+  function formatTime(diff) {
+    if (diff <= 0) return "Время вышло";
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((diff / (1000 * 60)) % 60);
     const seconds = Math.floor((diff / 1000) % 60);
 
-    document.getElementById("timer").textContent =
-      `${days}д ${hours}ч ${minutes}м ${seconds}с`;
-
-    let percent = ((now - startTime) / totalDuration) * 100;
-    if (percent < 0) percent = 0;
-    if (percent > 100) percent = 100;
-
-    document.getElementById("percent").textContent =
-      `Прогресс: ${percent.toFixed(6)}%`;
+    return `${days}д ${hours}ч ${minutes}м ${seconds}с`;
   }
 
-  updateTimer();
-  setInterval(updateTimer, 1000);
+  function calcPercent(now, start, end) {
+    let p = ((now - start) / (end - start)) * 100;
+    if (p < 0) p = 0;
+    if (p > 100) p = 100;
+    return p.toFixed(4);
+  }
+
+  function update() {
+    const now = Date.now();
+
+    document.getElementById("timerBest").textContent =
+      formatTime(bestEnd - now);
+    document.getElementById("percentBest").textContent =
+      `Прогресс: ${calcPercent(now, bestStart, bestEnd)}%`;
+
+    document.getElementById("timerWorst").textContent =
+      formatTime(worstEnd - now);
+    document.getElementById("percentWorst").textContent =
+      `Прогресс: ${calcPercent(now, worstStart, worstEnd)}%`;
+  }
+
+  update();
+  setInterval(update, 1000);
 </script>
 
 </body>
