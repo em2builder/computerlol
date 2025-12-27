@@ -80,12 +80,9 @@
 
 <div class="clicker">
   <h3>Кликер</h3>
-  <div class="click-count" id="clickCount">0</div>
-  <button onclick="addClick()">Клик</button>
+  <p>Клики: <span id="clickCount">0</span></p>
+  <button id="btn">Нажми</button>
 </div>
-
-<button id="btn">Нажми</button>
-<p>Клики: <span id="clickCount">0</span></p>
   
 <div class="comments">
   <h3>Комментарии</h3>
@@ -109,98 +106,88 @@ import {
   onValue
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
-from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
-
+/* ===== FIREBASE ===== */
 const firebaseConfig = {
-    apiKey: "AIzaSyDbAvcfYcB4aQ9xp9-TtefPZ_ibOyGCDiY",
-    authDomain: "zsuero-bot.firebaseapp.com",
-    databaseURL: "https://zsuero-bot-default-rtdb.firebaseio.com",
-    projectId: "zsuero-bot"
-  };
+  apiKey: "AIzaSyDbAvcfYcB4aQ9xp9-TtefPZ_ibOyGCDiY",
+  authDomain: "zsuero-bot.firebaseapp.com",
+  databaseURL: "https://zsuero-bot-default-rtdb.firebaseio.com",
+  projectId: "zsuero-bot"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+/* ===== COMMENTS ===== */
 const commentsRef = ref(db, "comments");
 
-// Отправка комментария
 window.sendComment = () => {
   const name = document.getElementById("name").value.trim();
   const text = document.getElementById("text").value.trim();
-  if(!name || !text) return;
-  push(commentsRef, {name, text, time: Date.now()});
+  if (!name || !text) return;
+  push(commentsRef, { name, text, time: Date.now() });
   document.getElementById("text").value = "";
 };
 
-// Получение всех комментариев в реальном времени
-onChildAdded(commentsRef, snapshot => {
-  const c = snapshot.val();
-  const list = document.getElementById("list");
+onChildAdded(commentsRef, snap => {
+  const c = snap.val();
   const div = document.createElement("div");
   div.className = "comment";
   div.innerHTML = `<b>${c.name}:</b> ${c.text}`;
-  list.appendChild(div);
-  list.scrollTop = list.scrollHeight;
+  document.getElementById("list").appendChild(div);
 });
-// timer
+
+/* ===== CLICKER ===== */
+const clickRef = ref(db, "clicker/count");
+
+get(clickRef).then(snap => {
+  if (!snap.exists()) set(clickRef, 0);
+});
+
+document.getElementById("btn").addEventListener("click", async () => {
+  const snap = await get(clickRef);
+  set(clickRef, (snap.val() || 0) + 1);
+});
+
+onValue(clickRef, snap => {
+  document.getElementById("clickCount").textContent = snap.val() ?? 0;
+});
+
+/* ===== TIMERS ===== */
 const totalDuration = 90000 * 1000;
 const bestEnd = new Date("2025-12-28T13:00:00").getTime();
 const worstEnd = new Date("2025-12-28T17:00:00").getTime();
 const bestStart = bestEnd - totalDuration;
 const worstStart = worstEnd - totalDuration;
 
-function format(ms){
-  if(ms <= 0) return "Готово";
-  const d = Math.floor(ms/86400000);
-  const h = Math.floor(ms/3600000)%24;
-  const m = Math.floor(ms/60000)%60;
-  const s = Math.floor(ms/1000)%60;
+function format(ms) {
+  if (ms <= 0) return "Готово";
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor(ms / 3600000) % 24;
+  const m = Math.floor(ms / 60000) % 60;
+  const s = Math.floor(ms / 1000) % 60;
   return `${d}д ${h}ч ${m}м ${s}с`;
 }
 
-function percent(now, start, end){
-  return Math.min(100, Math.max(0, ((now-start)/(end-start))*100));
+function percent(now, start, end) {
+  return Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
 }
 
-function update(){
+function update() {
   const now = Date.now();
-  const pB = percent(now,bestStart,bestEnd);
-  const pW = percent(now,worstStart,worstEnd);
-  timerBest.textContent = format(bestEnd-now);
+  const pB = percent(now, bestStart, bestEnd);
+  const pW = percent(now, worstStart, worstEnd);
+  timerBest.textContent = format(bestEnd - now);
   percentBest.textContent = `Прогресс: ${pB.toFixed(6)}%`;
-  barBest.style.width = pB+"%";
-  timerWorst.textContent = format(worstEnd-now);
+  barBest.style.width = pB + "%";
+  timerWorst.textContent = format(worstEnd - now);
   percentWorst.textContent = `Прогресс: ${pW.toFixed(6)}%`;
-  barWorst.style.width = pW+"%";
+  barWorst.style.width = pW + "%";
 }
+
 update();
-setInterval(update,1000);
-
-  const clickRef = ref(db, "clicker/count");
-
-// clicks
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const clickRef = ref(db, "clicker/count");
-
-// инициализация
-get(clickRef).then(snap => {
-  if (!snap.exists()) set(clickRef, 0);
-});
-
-// ✅ обработчик КАК НУЖНО
-document.getElementById("btn").addEventListener("click", async () => {
-  const snap = await get(clickRef);
-  const val = snap.exists() ? snap.val() : 0;
-  set(clickRef, val + 1);
-});
-
-// обновление
-onValue(clickRef, snap => {
-  document.getElementById("clickCount").textContent = snap.val() ?? 0;
-});
-
+setInterval(update, 1000);
 </script>
+
 
 </body>
 </html>
