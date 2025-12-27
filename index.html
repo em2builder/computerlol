@@ -83,6 +83,9 @@
   <div class="click-count" id="clickCount">0</div>
   <button onclick="addClick()">Клик</button>
 </div>
+
+<button id="btn">Нажми</button>
+<p>Клики: <span id="clickCount">0</span></p>
   
 <div class="comments">
   <h3>Комментарии</h3>
@@ -138,10 +141,7 @@ onChildAdded(commentsRef, snapshot => {
   list.appendChild(div);
   list.scrollTop = list.scrollHeight;
 });
-</script>
-
-<!-- ===== ТАЙМЕР ===== -->
-<script>
+// timer
 const totalDuration = 90000 * 1000;
 const bestEnd = new Date("2025-12-28T13:00:00").getTime();
 const worstEnd = new Date("2025-12-28T17:00:00").getTime();
@@ -177,24 +177,27 @@ setInterval(update,1000);
 
   const clickRef = ref(db, "clicker/count");
 
-// Инициализация, если счётчика нет
+// clicks
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const clickRef = ref(db, "clicker/count");
+
+// инициализация
 get(clickRef).then(snap => {
   if (!snap.exists()) set(clickRef, 0);
 });
 
-// Добавить клик
-window.addClick = async () => {
+// ✅ обработчик КАК НУЖНО
+document.getElementById("btn").addEventListener("click", async () => {
   const snap = await get(clickRef);
-  const current = snap.exists() ? snap.val() : 0;
-  set(clickRef, current + 1);
-};
+  const val = snap.exists() ? snap.val() : 0;
+  set(clickRef, val + 1);
+});
 
-// Реальное время
-onChildAdded(ref(db, "clicker"), () => {});
-import { onValue } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
-
-onValue(clickRef, snapshot => {
-  document.getElementById("clickCount").textContent = snapshot.val() ?? 0;
+// обновление
+onValue(clickRef, snap => {
+  document.getElementById("clickCount").textContent = snap.val() ?? 0;
 });
 
 </script>
